@@ -32,7 +32,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t flask-app .
+          docker build -t flask-app:latest .
 
       - name: Deploy to EC2
         env:
@@ -42,4 +42,4 @@ jobs:
         run: |
           echo "${PRIVATE_KEY}" > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "docker pull <your-dockerhub-username>/flask-app:latest && docker-compose up -d"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "docker save flask-app:latest | ssh ${USERNAME}@${HOST} 'docker load && docker-compose up -d'"
