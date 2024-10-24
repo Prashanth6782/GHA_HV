@@ -3,10 +3,10 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main # Trigger the workflow on pushes to the main branch
+      - main
   pull_request:
     branches:
-      - main # Trigger the workflow on pull requests targeting the main branch
+      - main
 
 jobs:
   build:
@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3 # Updated to v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3 # Updated to v3
         with:
           python-version: "3.9"
 
@@ -35,9 +35,9 @@ jobs:
 
       - name: Deploy to EC2
         env:
-          HOST: ${{ secrets.EC2_HOST }} # Your EC2 instance's public IP or hostname
-          USERNAME: ${{ secrets.EC2_USER }} # Your EC2 instance's username (e.g., ec2-user, ubuntu)
-          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }} # Your SSH private key
+          HOST: ${{ secrets.EC2_HOST }}
+          USERNAME: ${{ secrets.EC2_USER }}
+          PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
         run: |
           echo "${PRIVATE_KEY}" > private_key.pem
           chmod 600 private_key.pem
