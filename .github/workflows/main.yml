@@ -25,11 +25,6 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      # Commenting out the pytest part for now
-      # - name: Run tests
-      #   run: |
-      #     pytest
-
       - name: Build Docker image
         run: |
           docker build -t flask-app:latest .
@@ -42,10 +37,4 @@ jobs:
         run: |
           echo "${PRIVATE_KEY}" > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "
-            # Ensure Docker is running
-            sudo systemctl start docker
-            # Optional: Pull the latest image if using Docker Hub
-            # docker pull your-dockerhub-username/flask-app:latest
-            docker-compose up -d
-          "
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "docker save flask-app:latest | ssh ${USERNAME}@${HOST} 'docker load && docker-compose up -d'"
