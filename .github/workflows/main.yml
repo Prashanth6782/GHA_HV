@@ -29,17 +29,15 @@ jobs:
         run: |
           docker build -t flask-app:latest .
 
-      - name: List Docker images
-        run: |
-          docker images
-
       - name: Deploy to EC2
         env:
           HOST: ${{ secrets.EC2_HOST }}
           USERNAME: ${{ secrets.EC2_USER }}
           PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
         run: |
-          echo "${PRIVATE_KEY}" > private_key.pem
+          printf "%s" "${PRIVATE_KEY}" > private_key.pem
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "
-              docker save flask-app:latest | docke
+              docker save flask-app:latest | docker load || { echo 'Docker load failed'; exit 1; } &&
+              docker-compose up -d
+          "
