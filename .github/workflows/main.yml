@@ -35,7 +35,7 @@ jobs:
           USERNAME: ${{ secrets.EC2_USER }}
           PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
         run: |
-          printf "%s" "${PRIVATE_KEY}" > private_key.pem
+          printf "%s" "${secrets.EC2_SSH_PRIVATE_KEY}" > private_key.pem
           chmod 600 private_key.pem
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "
               docker save flask-app:latest | docker load || { echo 'Docker load failed'; exit 1; } &&
