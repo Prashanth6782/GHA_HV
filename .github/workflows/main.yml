@@ -1,4 +1,4 @@
-name: CI/CD Pipeli1ne
+name: CI/CD Pipeline
 
 on:
   push:
@@ -44,13 +44,19 @@ jobs:
           USERNAME: ${{ secrets.EC2_USER }}
           PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
         run: |
+          # Save private key
           printf "%s" "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
-          echo "Connecting to EC2 instance..."
+
+          # Transfer Docker image and docker-compose.yml file to EC2
+          echo "Transferring files to EC2 instance..."
           scp -o StrictHostKeyChecking=no -i private_key.pem flask-app.tar ${USERNAME}@${HOST}:~/ || { echo 'File transfer failed'; exit 1; }
+          scp -o StrictHostKeyChecking=no -i private_key.pem docker-compose.yml ${USERNAME}@${HOST}:~/ || { echo 'docker-compose.yml transfer failed'; exit 1; }
+
+          # Connect to EC2 instance and start the container
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "
               echo 'Loading Docker image...' &&
               docker load -i flask-app.tar || { echo 'Docker load failed'; exit 1; } &&
-              echo 'Starting Docker containers...' &&
+              echo 'Starting Docker containers with docker-compose...' &&
               docker-compose up -d || { echo 'Docker compose up failed'; exit 1; }
           "
