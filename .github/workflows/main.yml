@@ -26,10 +26,12 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build Docker image
+        id: build_image
         run: |
-          docker build -t flask-app:latest .
+          docker build -t flask-app:latest . || { echo 'Docker image build failed'; exit 1; }
 
       - name: Deploy to EC2
+        if: steps.build_image.outcome == 'success'
         env:
           HOST: ${{ secrets.EC2_HOST }}
           USERNAME: ${{ secrets.EC2_USER }}
