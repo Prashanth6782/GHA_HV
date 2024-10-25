@@ -1,9 +1,7 @@
-version: '3'
 services:
   web:
-    image: flask-app:latest
-    build: .
+    image: flask-app:latest  # This should match the tag of the local image
+    build:
+      context: .
     ports:
-      - "80:5000"
-    platform: linux/amd64  # Specify the platform
-    restart: always
+      - "80:5000"  # Mapping container port 5000 to host port 80
