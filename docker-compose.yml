@@ -5,5 +5,5 @@ services:
     build: .
     ports:
       - "80:5000"
-    platform: linux/arm64  # Specify the platform
+    platform: linux/amd64  # Specify the platform
     restart: always
