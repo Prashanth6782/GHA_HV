@@ -25,6 +25,11 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Run tests with pytest
+        run: |
+          pytest || { echo 'Tests failed'; exit 1; }
+          echo "Tests passed successfully."
+
       - name: Build Docker image
         id: build_image
         run: |
