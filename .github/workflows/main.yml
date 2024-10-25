@@ -31,8 +31,14 @@ jobs:
           docker build -t flask-app:latest . || { echo 'Docker image build failed'; exit 1; }
           echo "Docker image built successfully."
 
+      - name: Save Docker image
+        id: save_image
+        run: |
+          docker save -o flask-app.tar flask-app:latest || { echo 'Docker save failed'; exit 1; }
+          echo "Docker image saved successfully."
+
       - name: Deploy to EC2
-        if: steps.build_image.outcome == 'success'
+        if: steps.save_image.outcome == 'success'
         env:
           HOST: ${{ secrets.EC2_HOST }}
           USERNAME: ${{ secrets.EC2_USER }}
@@ -41,11 +47,10 @@ jobs:
           printf "%s" "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
           chmod 600 private_key.pem
           echo "Connecting to EC2 instance..."
+          scp -o StrictHostKeyChecking=no -i private_key.pem flask-app.tar ${USERNAME}@${HOST}:~/ || { echo 'File transfer failed'; exit 1; }
           ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "
-              echo 'Saving Docker image...' &&
-              docker save flask-app:latest > flask-app.tar || { echo 'Docker save failed'; exit 1; } &&
               echo 'Loading Docker image...' &&
-              cat flask-app.tar | docker load || { echo 'Docker load failed'; exit 1; } &&
+              docker load -i flask-app.tar || { echo 'Docker load failed'; exit 1; } &&
               echo 'Starting Docker containers...' &&
               docker-compose up -d || { echo 'Docker compose up failed'; exit 1; }
           "
