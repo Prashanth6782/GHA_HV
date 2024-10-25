@@ -1,7 +1,11 @@
+version: '3'  # Removed the obsolete `version` attribute as recommended
+
 services:
   web:
     image: flask-app:latest  # This should match the tag of the local image
     build:
-      context: .
+      context: .  # Build the image from the current directory (where Dockerfile is located)
     ports:
-      - "80:5000"  # Mapping container port 5000 to host port 80
+      - "80:5000"  # Map container port 5000 to host port 80
+    environment:
+      - FLASK_ENV=production  # Set Flask to production mode
