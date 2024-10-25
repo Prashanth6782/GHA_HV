@@ -30,10 +30,17 @@ jobs:
           pytest || { echo 'Tests failed'; exit 1; }
           echo "Tests passed successfully."
 
-      - name: Build Docker image
+      - name: Set up Docker Buildx
+        run: |
+          docker run --privileged --rm tonistiigi/binfmt --install all
+          docker buildx create --use
+          docker buildx inspect --bootstrap
+        shell: bash
+
+      - name: Build Docker image for ARM
         id: build_image
         run: |
-          docker build -t flask-app:latest . || { echo 'Docker image build failed'; exit 1; }
+          docker buildx build --platform linux/arm64 -t flask-app:latest . --load || { echo 'Docker image build failed'; exit 1; }
           echo "Docker image built successfully."
 
       - name: Save Docker image
