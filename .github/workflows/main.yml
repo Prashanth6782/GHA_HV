@@ -37,4 +37,7 @@ jobs:
         run: |
           echo "${PRIVATE_KEY}" > private_key.pem
           chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "docker save flask-app:latest | docker load && docker-compose up -d"
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${USERNAME}@${HOST} "
+              docker save flask-app:latest | docker load || { echo 'Docker load failed'; exit 1; } &&
+              docker-compose up -d
+          "
