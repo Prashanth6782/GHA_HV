@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                echo 'Cleaning the workspace...'
+                deleteDir()  // Ensure the workspace is cleared
+                sh 'ls -la /var/jenkins_home/workspace/pk1-assignment-pipeline'  // Verify the cleanup
+            }
+        }
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out code from Git repository...'
+                script {
+                    sh '''
+                        echo "Cloning repository..."
+                        git clone -b main https://github.com/Prashanth6782/Jenkins_HV_pk1.git /var/jenkins_home/workspace/pk1-assignment-pipeline
+                        if [ $? -ne 0 ]; then
+                            echo "Git clone failed. Please check the repository URL and permissions."
+                            exit 1
+                        else
+                            echo "Repository cloned successfully."
+                        fi
+                    '''
+                }
+            }
+        }
+        stage('Transfer Code to EC2') {
+            steps {
+                echo 'Transferring code to EC2...'
+                sshPublisher(publishers: [sshPublisherDesc(
+                    configName: "prashanth-aws-ec2",
+                    transfers: [
+                        sshTransfer(
+                            sourceFiles: '**/*',
+                            remoteDirectory: '$HOME/home/ubuntu/app'
+                        )
+                    ]
+                )])
+            }
+        }
+        stage('Initial Cleanup on EC2') {
+            steps {
+                echo 'Performing initial cleanup on EC2...'
+                sshPublisher(publishers: [sshPublisherDesc(
+                    configName: "prashanth-aws-ec2",
+                    transfers: [
+                        sshTransfer(
+                            execCommand: '''
+                                echo "Removing existing Docker container if it exists..."
+                                sudo docker rm -f flask-app-container || true
+                                echo "Removing existing Docker image..."
+                                sudo docker rmi -f flask-app-image || true
+                            '''
+                        )
+                    ]
+                )])
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image on EC2...'
+                sshPublisher(publishers: [sshPublisherDesc(
+                    configName: "prashanth-aws-ec2",
+                    transfers: [
+                        sshTransfer(
+                            execCommand: '''
+                                echo "Navigating to application directory..."
+                                cd   $HOME/home/ubuntu/app
+                                echo "Building Docker image..."
+                                sudo docker build -t flask-app-image .
+                                echo "Docker image built successfully."
+                            '''
+                        )
+                    ]
+                )])
+            }
+        }
+        stage('Run Docker Container') {
+            steps {
+                echo 'Running Docker container on EC2...'
+                sshPublisher(publishers: [sshPublisherDesc(
+                    configName: "prashanth-aws-ec2",
+                    transfers: [
+                        sshTransfer(
+                            execCommand: '''
+                                echo "Running the Docker container..."
+                                sudo docker run -d --name flask-app-container -p 5000:5000 flask-app-image
+                                echo "Docker container is running."
+                            '''
+                        )
+                    ]
+                )])
+            }
+        }
+    }
+}
